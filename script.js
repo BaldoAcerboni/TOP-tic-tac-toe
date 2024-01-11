@@ -7,53 +7,71 @@ const Gameboard = (function () {
     [0, 0, 0],
     [0, 0, 0],
   ];
-  let _round = 0;
 
   const updateGameboard = function (player, row, col) {
-    _round++;
     _gameboard[row][col] = player;
+    game.increaseRound();
     game.isGameOver();
   };
 
   const getGameboard = () => _gameboard;
 
-  const clearBoard = function () {
+  const clearBoard = () => {
     _gameboard = [
       [0, 0, 0],
       [0, 0, 0],
       [0, 0, 0],
     ];
-    game.resetWinner();
   };
 
-  const getRound = () => _round;
-
-  return { updateGameboard, getGameboard, clearBoard, getRound };
+  return { updateGameboard, getGameboard, clearBoard };
 })();
 
 const Players = (function () {
   const player1 = {
     id: 1,
     symbol: "O",
+    turn: true,
+    userStatus: "AI", //REMEMBER TO CHANGE IT BACK TO undefined
   };
   const player2 = {
     id: 2,
     symbol: "X",
+    turn: false,
+    userStatus: "player", //REMEMBER TO CHANGE IT BACK TO undefined
   };
 
   const getP1 = () => player1;
   const getP2 = () => player2;
 
-  return { getP1, getP2 };
+  const switchTurn = () => {
+    player1.turn = !player1.turn;
+    player2.turn = !player2.turn;
+  };
+
+  const setUserStatus = function (p1, p2) {
+    player1.userStatus = p1;
+    player2.userStatus = p2;
+  };
+
+  return { getP1, getP2, switchTurn, setUserStatus };
 })();
 
 const game = (function () {
   let gameOver = false;
   let _winner = 0;
+  let _roundCount = 0;
+
+  const getRoundNr = () => _roundCount;
+
+  const increaseRound = () => {
+    _roundCount++;
+    Players.switchTurn();
+  };
 
   const isGameOver = function () {
     const board = Gameboard.getGameboard();
-    let roundPlayed = Gameboard.getRound();
+
     if (board[1][1]) {
       if (
         (board[0][0] === board[1][1] && board[1][1] === board[2][2]) ||
@@ -61,7 +79,7 @@ const game = (function () {
       ) {
         gameOver = true;
         _winner = board[1][1];
-        Gameboard.clearBoard(); //necessary??
+        displayController.gameOverDisplay();
       }
     }
     for (let i = 0; i < 3; i++) {
@@ -73,7 +91,6 @@ const game = (function () {
         gameOver = true;
         _winner = board[i][0];
         displayController.gameOverDisplay();
-        Gameboard.clearBoard(); //necessary??
       } else if (
         board[0][i] &&
         board[0][i] === board[1][i] &&
@@ -82,67 +99,130 @@ const game = (function () {
         gameOver = true;
         _winner = board[0][i];
         displayController.gameOverDisplay();
-        Gameboard.clearBoard(); //necessary??
       }
     }
-    if (_winner === 0 && roundPlayed === 9) {
+    if (_winner === 0 && _roundCount === 9) {
       gameOver = true;
       displayController.gameOverDisplay();
-      Gameboard.clearBoard(); //necessary??
     }
+    if (gameOver) {
+      Array.from(cells).forEach((cell) => {
+        cell.removeEventListener("click", displayController.userMovePvp);
+      });
+    }
+  };
+
+  const resetGameOver = () => {
+    gameOver = false;
   };
 
   const getWinner = () => _winner;
   const resetWinner = () => {
     _winner = 0;
   };
+  const resetRound = () => {
+    _roundCount = 0;
+    if (Players.getP1().turn === false) {
+      Players.switchTurn();
+    }
+  };
 
-  return { isGameOver, getWinner, resetWinner };
+  return {
+    isGameOver,
+    getWinner,
+    resetWinner,
+    getRoundNr,
+    increaseRound,
+    resetRound,
+    resetGameOver,
+  };
+})();
+
+const AILogic = (function () {
+  const AIPlayer = Players.getP1(); //TEMP
+  const userPlayer = Players.getP2(); //TEMP
+
+  //create a copy without reference of multi-dimensional array, it might not create problems with all the protections
+  //that factory functions guarantee but why risk it? Hopefully performance won't be an issue.
+  //i don't even know if it is really necessary but i think i need it for the AI logic
+  const createBoardCopy = function () {
+    let boardCopy = [];
+    for (let i = 0; i < 3; i++) {
+      boardCopy[i] = board[i].slice(0);
+    }
+    return boardCopy;
+  };
+
+  //need to put AI selector inside displayController
+  const move = (/* difficulty(?) */) => {
+    const board = Gameboard.getGameboard();
+    const round = game.getRoundNr();
+
+    if (!round) {
+      Gameboard.updateGameboard(AIPlayer, 0, 0);
+      msg.textContent = "Player's turn";
+      document.getElementById(`0-0`).textContent = AIPlayer.symbol;
+
+      Array.from(cells).forEach((cell) => {
+        cell.addEventListener("click", displayController.userMovePvp);
+      });
+    } else if (round === 2) {
+      if (board[0][2] === 0) {
+        Gameboard.updateGameboard(AIPlayer, 0, 0);
+        msg.textContent = "Player's turn";
+        document.getElementById(`0-2`).textContent = AIPlayer.symbol;
+      }
+    }
+  };
+  return { move };
 })();
 
 const displayController = (function () {
   const p1 = Players.getP1();
   const p2 = Players.getP2();
+
   const msg = document.getElementById("msg");
 
-  const p1Move = function (e) {
+  //move based on two human players need pvp option
+  const whichUser = () => {
+    if (p1.turn) {
+      const user = p1;
+      return user;
+    } else {
+      const user = p2;
+      return user;
+    }
+  };
+
+  const userMovePvp = function (e) {
     const pos = e.target.id.split("-");
     const posX = Number(pos[0]);
     const posY = Number(pos[1]);
     const boardSituation = Gameboard.getGameboard();
 
     if (boardSituation[posX][posY] === 0) {
-      e.target.textContent = p1.symbol;
-      Gameboard.updateGameboard(p1.id, posX, posY);
-
-      Array.from(cells).forEach((cell) => {
-        cell.removeEventListener("click", displayController.p1Move);
-      });
-
-      Array.from(cells).forEach((cell) => {
-        cell.addEventListener("click", displayController.p2Move);
-      });
+      e.target.textContent = whichUser().symbol;
+      msg.textContent = "";
+      Gameboard.updateGameboard(whichUser().id, posX, posY);
     } else {
       msg.textContent = `Position has already been selected by player${boardSituation[posX][posY]}`;
     }
   };
 
-  const p2Move = function (e) {
+  //DRY MIA(when i got something working i'll fix it)
+  const userMovePve = function (e) {
     const pos = e.target.id.split("-");
     const posX = Number(pos[0]);
     const posY = Number(pos[1]);
     const boardSituation = Gameboard.getGameboard();
 
     if (boardSituation[posX][posY] === 0) {
-      e.target.textContent = p2.symbol;
-      Gameboard.updateGameboard(p2.id, posX, posY);
+      e.target.textContent = whichUser().symbol;
+      msg.textContent = "";
+      Gameboard.updateGameboard(whichUser().id, posX, posY);
 
       Array.from(cells).forEach((cell) => {
-        cell.removeEventListener("click", displayController.p2Move);
-      });
-
-      Array.from(cells).forEach((cell) => {
-        cell.addEventListener("click", displayController.p1Move);
+        cell.removeEventListener("click");
       });
     } else {
       msg.textContent = `Position has already been selected by player${boardSituation[posX][posY]}`;
@@ -150,11 +230,19 @@ const displayController = (function () {
   };
 
   const clearDisplay = function () {
-    Gameboard.clearBoard();
     Array.from(cells).forEach((cell) => {
       cell.textContent = "";
     });
     msg.textContent = "";
+
+    Gameboard.clearBoard();
+    game.resetWinner();
+    game.resetRound();
+    game.resetGameOver();
+
+    Array.from(cells).forEach((cell) => {
+      cell.addEventListener("click", displayController.userMovePvp);
+    });
   };
 
   const gameOverDisplay = function () {
@@ -166,45 +254,22 @@ const displayController = (function () {
     }
   };
 
-  return { p1Move, p2Move, clearDisplay, gameOverDisplay };
+  return { userMovePvp, clearDisplay, gameOverDisplay };
 })();
 
-Array.from(cells).forEach((cell) => {
-  cell.addEventListener("click", displayController.p1Move);
-});
+/* Array.from(cells).forEach((cell) => {
+  cell.addEventListener("click", displayController.userMovePvp);
+}); */
+
+AILogic.move();
 
 clearBtn.addEventListener("click", displayController.clearDisplay);
 
 /*
 TO DO LIST:
 FIX
-the Gameboard.clearBoard() function call is probably in too many places, need to optimize;
-after game over the event listener need to be disabled, and re-enabled after clear btn;
-round counter needs to be put inside game instead of Gameboard + add getter and setter(reset);
+smash your head against the ai and find a somewhat doable solution
+try messing about and find bugs
 NEW FEATURE:
 need to build AI player from scratch, with difficulty settings(?);
  */
-
-//console.log(document.getElementById("0-0").id.split("-"));//REMEMBER it returns a string!!
-/*
-Gameboard.updateGameboard(players.player1, 0, 0);
-Gameboard.updateGameboard(players.player2, 1, 1);
-Gameboard.updateGameboard(players.player1, 0, 1);
-Gameboard.updateGameboard(players.player2, 1, 0);
-console.log(Gameboard.getGameboard());
-Gameboard.updateGameboard(players.player1, 0, 2); //chicken dinner player1
-console.log(Gameboard.getGameboard());
-Gameboard.updateGameboard(players.player2, 1, 2);
-Gameboard.updateGameboard(players.player1, 2, 0);
-Gameboard.updateGameboard(players.player2, 2, 1);
-console.log(Gameboard.getGameboard());
-Gameboard.updateGameboard(players.player1, 2, 2);
-console.log(Gameboard.getGameboard()); 
-
-//console.log(Gameboard.getGameboard());
-the _gameBoard array gets messed up retroactively(ln 98 gets affected by what happens in ln99, which either means 
-i understood nothing on how the browser processes stuff, or there is somenthing really weird going on)
-by clearBoard if i execute all the above commands at the same time but not if i go step by step,
-in that case it works as intended in the sources tab so let us hope that the app works in the DOM because 
-i would not even know what i am doing wrong, i hope it is JS just being JS or maybe some browser shenannigans(chrome)
-*/
