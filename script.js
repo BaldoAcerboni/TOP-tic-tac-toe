@@ -67,10 +67,40 @@ const game = (function () {
   let _roundCount = 0;
 
   const getRoundNr = () => _roundCount;
-
   const increaseRound = () => {
     _roundCount++;
     Players.switchTurn();
+  };
+
+  const crossCheck = function (board, condition) {
+    if (
+      (board[0][0] === board[1][1] && board[1][1] === board[2][2]) ||
+      (board[0][2] === board[1][1] && board[1][1] === board[2][0])
+    ) {
+      return true;
+    }
+  };
+  const rowCheck = function (board) {
+    for (let row = 0; row < 3; row++) {
+      if (
+        board[row][0] &&
+        board[row][0] === board[row][1] &&
+        board[row][0] === board[row][2]
+      ) {
+        return [true, row];
+      }
+    }
+  };
+  const colCheck = function (board) {
+    for (let col = 0; col < 3; col++) {
+      if (
+        board[0][col] &&
+        board[0][col] === board[1][col] &&
+        board[0][col] === board[2][col]
+      ) {
+        return [true, col];
+      }
+    }
   };
 
   const isGameOver = function () {
@@ -78,29 +108,26 @@ const game = (function () {
     console.log("first");
 
     if (board[1][1]) {
-      if (
-        (board[0][0] === board[1][1] && board[1][1] === board[2][2]) ||
-        (board[0][2] === board[1][1] && board[1][1] === board[2][0])
-      ) {
-        gameOver = true;
+      const crossWin = crossCheck(board);
+      if (crossWin) {
+        gameOver = crossWin;
         _winner = board[1][1];
       }
     }
-    for (let i = 0; i < 3; i++) {
-      if (
-        board[i][0] &&
-        board[i][0] === board[i][1] &&
-        board[i][0] === board[i][2]
-      ) {
-        gameOver = true;
-        _winner = board[i][0];
-      } else if (
-        board[0][i] &&
-        board[0][i] === board[1][i] &&
-        board[0][i] === board[2][i]
-      ) {
-        gameOver = true;
-        _winner = board[0][i];
+    if (board[0][0] || board[1][0] || board[2][0]) {
+      const rowWin = rowCheck(board);
+      if (rowWin) {
+        const whichRow = rowWin[1];
+        gameOver = rowWin[0];
+        _winner = board[whichRow][0];
+      }
+    }
+    if (board[0][0] || board[0][1] || board[0][2]) {
+      const colWin = colCheck(board);
+      if (colWin) {
+        const whichCol = colWin[1];
+        gameOver = colWin[0];
+        _winner = board[0][whichCol];
       }
     }
     if (_winner === 0 && _roundCount === 9) {
@@ -112,7 +139,7 @@ const game = (function () {
       /*  Array.from(cells).forEach((cell) => {
         cell.removeEventListener("click", displayController.playerMove);
       }); */
-      console.log("last");
+      console.log("game.isGameOver -> if gameOver is true");
     }
   };
 
@@ -141,6 +168,9 @@ const game = (function () {
     increaseRound,
     resetRound,
     resetGameOver,
+    crossCheck,
+    rowCheck,
+    colCheck,
   };
 })();
 
@@ -168,50 +198,35 @@ const AILogic = (function () {
         if (boardCopy[i][j] === 0) {
           boardCopy[i][j] = playerId;
 
-          //the crap below is basically a repetition of part of game.isGameOver function(ln 72)
-          //2 differences:
-          //-first condition here checks(cross check) for a specific player while in game.isGameOver only checks
-          //  if the value is truthy(ln 187)(boardCopy[1][1] === playerId) while (ln 76)(board[1][1])
-          //  same thing for horizontal(ln 200)&(ln 87) and vertical check(ln 206)&(ln 94)
-          //need to optimize when i got it working properly
-
-          //a decent solution probably is to make 3 functions:
-          //1 for the cross check that if false calls for the horizontal which if false calls for the vertical
-          //the doubt i have is how to to check the first condition which in the AI logic needs to check
-          //for a specific player but may be it is not even necessary since the the program needs to check if
-          //anyone has any winning move available but i might run into some conflict where AI might prioritize
-          //not loosing rather than winning, which would be a mistake.
-
-          //another possible solution is to make the same 3 functions:
-          //not making the functions call each other but to put 3 separate if statements which will always
-          //be sequentially checked.
-          //but i think i might get the same type of conflict, the difference with the first solution is that the
-          //latter would return the last winning player instead of the first, god knows if i'd get the right one.
-          //maybe returning the winning player along side the win/gameOver Boolean but that would add another check
-          //if i don't try it i won't know
           if (boardCopy[1][1] === playerId) {
-            if (
-              (boardCopy[0][0] === boardCopy[1][1] &&
-                boardCopy[1][1] === boardCopy[2][2]) ||
-              (boardCopy[0][2] === boardCopy[1][1] &&
-                boardCopy[1][1] === boardCopy[2][0])
-            ) {
-              win = true;
+            const crossWin = game.crossCheck(boardCopy); //
+            if (crossWin) {
+              gameOver = crossWin;
+              win = boardCopy[1][1];
             }
           }
-          for (let l = 0; l < 3; l++) {
-            if (
-              boardCopy[l][0] === playerId &&
-              boardCopy[l][0] === boardCopy[l][1] &&
-              boardCopy[l][0] === boardCopy[l][2]
-            ) {
-              win = true;
-            } else if (
-              boardCopy[0][l] === playerId &&
-              boardCopy[0][l] === boardCopy[1][l] &&
-              boardCopy[0][l] === boardCopy[2][l]
-            ) {
-              win = true;
+          if (
+            boardCopy[0][0] === playerId ||
+            boardCopy[1][0] === playerId ||
+            boardCopy[2][0] === playerId
+          ) {
+            const rowWin = game.rowCheck(boardCopy); //
+            if (rowWin) {
+              const whichRow = rowWin[1];
+              gameOver = rowWin[0];
+              win = boardCopy[whichRow][0];
+            }
+          }
+          if (
+            boardCopy[0][0] === playerId ||
+            boardCopy[0][1] === playerId ||
+            boardCopy[0][2] === playerId
+          ) {
+            const colWin = game.colCheck(boardCopy); //
+            if (colWin) {
+              const whichCol = colWin[1];
+              gameOver = colWin[0];
+              win = boardCopy[0][whichCol];
             }
           }
         }
@@ -262,10 +277,10 @@ const AILogic = (function () {
         Gameboard.updateGameboard(AIPlayer.id, userWin[0], userWin[1]);
         document.getElementById(`${userWin[0]}-${userWin[1]}`).textContent =
           AIPlayer.symbol;
-      } else if (
-        (board[0][0] === userPlayer.id && board[2][2] === userPlayer.id) ||
-        (board[0][2] === userPlayer.id && board[2][0] === userPlayer.id)
-      ) {
+      } else if (board[0][1] === 0 && board[2][1] === 0) {
+        Gameboard.updateGameboard(AIPlayer.id, 0, 1);
+        document.getElementById(`0-1`).textContent = AIPlayer.symbol;
+      } else {
         Gameboard.updateGameboard(AIPlayer.id, 1, 0);
         document.getElementById(`1-0`).textContent = AIPlayer.symbol;
       }
@@ -416,7 +431,8 @@ displayController.playerMoveAddEventListener();
 /* Array.from(cells).forEach((cell) => {
   cell.addEventListener("click", displayController.playerMove);
 }); */
-
+//this should not be here but i need to make it so that it activates when user decides
+//between single player and multiplayer
 //AILogic.move();
 
 clearBtn.addEventListener("click", displayController.clearDisplay);
@@ -424,9 +440,8 @@ clearBtn.addEventListener("click", displayController.clearDisplay);
 /*
 TO DO LIST:
 FIX
-make logic for AI when user starts game(DONE)
 all HTML and CSS for pvp/pve setting
-DRY for the game.gameOver and AILogic.winningMove
+DRY for the game.gameOver and AILogic.winningMove(DONE)
 try messing about and find bugs
 delete all console.log() calls
 NEW FEATURE:
