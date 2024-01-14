@@ -32,13 +32,13 @@ const Players = (function () {
     id: 1,
     symbol: "O",
     turn: true,
-    userStatus: "AI", //REMEMBER TO CHANGE IT BACK TO undefined
+    userStatus: "player", //REMEMBER TO CHANGE IT BACK TO undefined
   };
   const player2 = {
     id: 2,
     symbol: "X",
     turn: false,
-    userStatus: "player", //REMEMBER TO CHANGE IT BACK TO undefined
+    userStatus: "AI", //REMEMBER TO CHANGE IT BACK TO undefined
   };
 
   const getP1 = () => player1;
@@ -48,13 +48,17 @@ const Players = (function () {
     player1.turn = !player1.turn;
     player2.turn = !player2.turn;
   };
+  const resetTurn = () => {
+    player1.turn = true;
+    player2.turn = false;
+  };
 
   const setUserStatus = function (p1, p2) {
     player1.userStatus = p1;
     player2.userStatus = p2;
   };
 
-  return { getP1, getP2, switchTurn, setUserStatus };
+  return { getP1, getP2, switchTurn, setUserStatus, resetTurn };
 })();
 
 const game = (function () {
@@ -104,13 +108,15 @@ const game = (function () {
     }
     if (gameOver) {
       displayController.gameOverDisplay();
-      Array.from(cells).forEach((cell) => {
+
+      /*  Array.from(cells).forEach((cell) => {
         cell.removeEventListener("click", displayController.playerMove);
-      });
+      }); */
       console.log("last");
     }
   };
 
+  const getGameOverStatus = () => gameOver;
   const resetGameOver = () => {
     gameOver = false;
   };
@@ -127,6 +133,7 @@ const game = (function () {
   };
 
   return {
+    getGameOverStatus,
     isGameOver,
     getWinner,
     resetWinner,
@@ -138,8 +145,14 @@ const game = (function () {
 })();
 
 const AILogic = (function () {
-  const AIPlayer = Players.getP1(); //TEMP
-  const userPlayer = Players.getP2(); //TEMP
+  //AI first
+  /* const AIPlayer = Players.getP1(); //TEMP
+  const userPlayer = Players.getP2(); //TEMP */
+
+  //user first
+  const AIPlayer = Players.getP2(); //TEMP
+  const userPlayer = Players.getP1(); // TEMP
+
   const board = Gameboard.getGameboard();
 
   const winningMove = function (playerId) {
@@ -147,14 +160,35 @@ const AILogic = (function () {
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         const boardCopy = [];
+
+        //loop below copies array of arrays(depth 2) without reference as to not mess up the original board array
         for (let k = 0; k < 3; k++) {
           boardCopy[k] = board[k].slice(0);
         }
         if (boardCopy[i][j] === 0) {
           boardCopy[i][j] = playerId;
 
-          //the crap below is basically a repetition of part of game.isGameOver function
+          //the crap below is basically a repetition of part of game.isGameOver function(ln 72)
+          //2 differences:
+          //-first condition here checks(cross check) for a specific player while in game.isGameOver only checks
+          //  if the value is truthy(ln 187)(boardCopy[1][1] === playerId) while (ln 76)(board[1][1])
+          //  same thing for horizontal(ln 200)&(ln 87) and vertical check(ln 206)&(ln 94)
           //need to optimize when i got it working properly
+
+          //a decent solution probably is to make 3 functions:
+          //1 for the cross check that if false calls for the horizontal which if false calls for the vertical
+          //the doubt i have is how to to check the first condition which in the AI logic needs to check
+          //for a specific player but may be it is not even necessary since the the program needs to check if
+          //anyone has any winning move available but i might run into some conflict where AI might prioritize
+          //not loosing rather than winning, which would be a mistake.
+
+          //another possible solution is to make the same 3 functions:
+          //not making the functions call each other but to put 3 separate if statements which will always
+          //be sequentially checked.
+          //but i think i might get the same type of conflict, the difference with the first solution is that the
+          //latter would return the last winning player instead of the first, god knows if i'd get the right one.
+          //maybe returning the winning player along side the win/gameOver Boolean but that would add another check
+          //if i don't try it i won't know
           if (boardCopy[1][1] === playerId) {
             if (
               (boardCopy[0][0] === boardCopy[1][1] &&
@@ -165,17 +199,17 @@ const AILogic = (function () {
               win = true;
             }
           }
-          for (let i = 0; i < 3; i++) {
+          for (let l = 0; l < 3; l++) {
             if (
-              boardCopy[i][0] === playerId &&
-              boardCopy[i][0] === boardCopy[i][1] &&
-              boardCopy[i][0] === boardCopy[i][2]
+              boardCopy[l][0] === playerId &&
+              boardCopy[l][0] === boardCopy[l][1] &&
+              boardCopy[l][0] === boardCopy[l][2]
             ) {
               win = true;
             } else if (
-              boardCopy[0][i] === playerId &&
-              boardCopy[0][i] === boardCopy[1][i] &&
-              boardCopy[0][i] === boardCopy[2][i]
+              boardCopy[0][l] === playerId &&
+              boardCopy[0][l] === boardCopy[1][l] &&
+              boardCopy[0][l] === boardCopy[2][l]
             ) {
               win = true;
             }
@@ -193,13 +227,28 @@ const AILogic = (function () {
   //need to put AI selector inside displayController
   const move = (/* difficulty(?) */) => {
     const round = game.getRoundNr();
+
+    //userWin AIWin and random are probably a bit redundant here since they are not used for the first few moves
+    //but otherwise i would need to declare them each time i need them so since performance is not an issue
+    //i  would rather avoid the risk of typos.
     const userWin = winningMove(userPlayer.id);
     const AIWin = winningMove(AIPlayer.id);
     const random = randomMove();
 
+    //first few moves(when no player has a chance of victory) have a defined set of instructions,
+    //based on https://www.wikihow.com/Win-at-Tic-Tac-Toe.
+    //otherwise always prioritize AIWin over userWin, worst case scenario go for random move
     if (round === 0) {
       Gameboard.updateGameboard(AIPlayer.id, 0, 0);
       document.getElementById(`0-0`).textContent = AIPlayer.symbol;
+    } else if (round === 1) {
+      if (board[1][1] === 0) {
+        Gameboard.updateGameboard(AIPlayer.id, 1, 1);
+        document.getElementById(`1-1`).textContent = AIPlayer.symbol;
+      } else {
+        Gameboard.updateGameboard(AIPlayer.id, 0, 0);
+        document.getElementById(`0-0`).textContent = AIPlayer.symbol;
+      }
     } else if (round === 2) {
       if (board[0][2] === 0 && board[0][1] === 0) {
         Gameboard.updateGameboard(AIPlayer.id, 0, 2);
@@ -207,6 +256,18 @@ const AILogic = (function () {
       } else {
         Gameboard.updateGameboard(AIPlayer.id, 2, 0);
         document.getElementById(`2-0`).textContent = AIPlayer.symbol;
+      }
+    } else if (round === 3) {
+      if (userWin) {
+        Gameboard.updateGameboard(AIPlayer.id, userWin[0], userWin[1]);
+        document.getElementById(`${userWin[0]}-${userWin[1]}`).textContent =
+          AIPlayer.symbol;
+      } else if (
+        (board[0][0] === userPlayer.id && board[2][2] === userPlayer.id) ||
+        (board[0][2] === userPlayer.id && board[2][0] === userPlayer.id)
+      ) {
+        Gameboard.updateGameboard(AIPlayer.id, 1, 0);
+        document.getElementById(`1-0`).textContent = AIPlayer.symbol;
       }
     } else if (round === 4) {
       if (AIWin) {
@@ -239,9 +300,11 @@ const AILogic = (function () {
           AIPlayer.symbol;
       }
     }
-
-    displayController.playerMoveAddEventListener();
+    if (!game.getGameOverStatus()) {
+      displayController.playerMoveAddEventListener();
+    }
   };
+
   const randomMove = function () {
     const possibleMoves = [];
     for (let i = 0; i < 3; i++) {
@@ -273,11 +336,13 @@ const displayController = (function () {
   };
 
   const playerMoveAddEventListener = function () {
+    console.log("addEventListener");
     Array.from(cells).forEach((cell) => {
       cell.addEventListener("click", playerMove);
     });
   };
   const playerMoveRemoveEventListener = function () {
+    console.log("remove event listener");
     Array.from(cells).forEach((cell) => {
       cell.removeEventListener("click", playerMove);
     });
@@ -300,7 +365,9 @@ const displayController = (function () {
     if (p1.userStatus === "AI" || p2.userStatus === "AI") {
       if (whichPlayer().userStatus === "AI") {
         playerMoveRemoveEventListener();
-        AILogic.move();
+        if (!game.getGameOverStatus()) {
+          AILogic.move();
+        }
       }
     }
   };
@@ -315,7 +382,10 @@ const displayController = (function () {
     game.resetWinner();
     game.resetRound();
     game.resetGameOver();
+    Players.resetTurn();
 
+    //this is for multiplayer need to adapt to single player and initial select screen
+    //this creates a problem after clicking the clearBoardBtn where user goes from player1 to player2
     Array.from(cells).forEach((cell) => {
       cell.addEventListener("click", displayController.playerMove);
     });
@@ -325,7 +395,6 @@ const displayController = (function () {
     const winner = game.getWinner();
     console.log(winner);
     if (winner) {
-      console.log(`The winner is player${winner}`);
       msg.textContent = `The winner is player${winner}`;
     } else {
       msg.textContent = `The game ends in a draw`;
@@ -337,22 +406,27 @@ const displayController = (function () {
     clearDisplay,
     gameOverDisplay,
     playerMoveAddEventListener,
+    playerMoveRemoveEventListener,
   };
 })();
+//this should not be here but i need to make it so that it activates when user decides
+//between single player and multiplayer
+displayController.playerMoveAddEventListener();
 
 /* Array.from(cells).forEach((cell) => {
   cell.addEventListener("click", displayController.playerMove);
 }); */
 
-AILogic.move();
+//AILogic.move();
 
 clearBtn.addEventListener("click", displayController.clearDisplay);
 
 /*
 TO DO LIST:
 FIX
-make logic for AI when user starts game
+make logic for AI when user starts game(DONE)
 all HTML and CSS for pvp/pve setting
+DRY for the game.gameOver and AILogic.winningMove
 try messing about and find bugs
 delete all console.log() calls
 NEW FEATURE:
