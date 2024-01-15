@@ -1,4 +1,4 @@
-const clearBtn = document.getElementById("clear");
+const newGameBtn = document.getElementById("new-game-btn");
 const cells = document.querySelectorAll(".cell");
 
 const Gameboard = (function () {
@@ -32,13 +32,13 @@ const Players = (function () {
     id: 1,
     symbol: "O",
     turn: true,
-    userStatus: "player", //REMEMBER TO CHANGE IT BACK TO undefined
+    userStatus: "player",
   };
   const player2 = {
     id: 2,
     symbol: "X",
     turn: false,
-    userStatus: "AI", //REMEMBER TO CHANGE IT BACK TO undefined
+    userStatus: "player",
   };
 
   const getP1 = () => player1;
@@ -57,8 +57,22 @@ const Players = (function () {
     player1.userStatus = p1;
     player2.userStatus = p2;
   };
+  const getAI = function () {
+    if (player1.userStatus === "AI") {
+      return player1;
+    } else {
+      return player2;
+    }
+  };
+  const getUser = function () {
+    if (player1.userStatus === "player") {
+      return player1;
+    } else {
+      return player2;
+    }
+  };
 
-  return { getP1, getP2, switchTurn, setUserStatus, resetTurn };
+  return { getP1, getP2, switchTurn, setUserStatus, resetTurn, getAI, getUser };
 })();
 
 const game = (function () {
@@ -72,7 +86,7 @@ const game = (function () {
     Players.switchTurn();
   };
 
-  const crossCheck = function (board, condition) {
+  const crossCheck = function (board) {
     if (
       (board[0][0] === board[1][1] && board[1][1] === board[2][2]) ||
       (board[0][2] === board[1][1] && board[1][1] === board[2][0])
@@ -105,7 +119,6 @@ const game = (function () {
 
   const isGameOver = function () {
     const board = Gameboard.getGameboard();
-    console.log("first");
 
     if (board[1][1]) {
       const crossWin = crossCheck(board);
@@ -135,11 +148,6 @@ const game = (function () {
     }
     if (gameOver) {
       displayController.gameOverDisplay();
-
-      /*  Array.from(cells).forEach((cell) => {
-        cell.removeEventListener("click", displayController.playerMove);
-      }); */
-      console.log("game.isGameOver -> if gameOver is true");
     }
   };
 
@@ -154,9 +162,6 @@ const game = (function () {
   };
   const resetRound = () => {
     _roundCount = 0;
-    if (Players.getP1().turn === false) {
-      Players.switchTurn();
-    }
   };
 
   return {
@@ -175,23 +180,14 @@ const game = (function () {
 })();
 
 const AILogic = (function () {
-  //AI first
-  /* const AIPlayer = Players.getP1(); //TEMP
-  const userPlayer = Players.getP2(); //TEMP */
-
-  //user first
-  const AIPlayer = Players.getP2(); //TEMP
-  const userPlayer = Players.getP1(); // TEMP
-
-  const board = Gameboard.getGameboard();
-
   const winningMove = function (playerId) {
+    const board = Gameboard.getGameboard();
     let win = false;
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         const boardCopy = [];
 
-        //loop below copies array of arrays(depth 2) without reference as to not mess up the original board array
+        //loop below(k) copies array of arrays(depth 2) without reference as to not mess up the original board array
         for (let k = 0; k < 3; k++) {
           boardCopy[k] = board[k].slice(0);
         }
@@ -231,7 +227,6 @@ const AILogic = (function () {
           }
         }
         if (win) {
-          console.log([i, j]);
           return [i, j];
         }
       }
@@ -241,7 +236,10 @@ const AILogic = (function () {
 
   //need to put AI selector inside displayController
   const move = (/* difficulty(?) */) => {
+    const board = Gameboard.getGameboard();
     const round = game.getRoundNr();
+    const AIPlayer = Players.getAI();
+    const userPlayer = Players.getUser();
 
     //userWin AIWin and random are probably a bit redundant here since they are not used for the first few moves
     //but otherwise i would need to declare them each time i need them so since performance is not an issue
@@ -251,18 +249,17 @@ const AILogic = (function () {
     const random = randomMove();
 
     //first few moves(when no player has a chance of victory) have a defined set of instructions,
-    //based on https://www.wikihow.com/Win-at-Tic-Tac-Toe.
     //otherwise always prioritize AIWin over userWin, worst case scenario go for random move
     if (round === 0) {
       Gameboard.updateGameboard(AIPlayer.id, 0, 0);
       document.getElementById(`0-0`).textContent = AIPlayer.symbol;
     } else if (round === 1) {
-      if (board[1][1] === 0) {
-        Gameboard.updateGameboard(AIPlayer.id, 1, 1);
-        document.getElementById(`1-1`).textContent = AIPlayer.symbol;
-      } else {
+      if (board[1][1] !== 0) {
         Gameboard.updateGameboard(AIPlayer.id, 0, 0);
         document.getElementById(`0-0`).textContent = AIPlayer.symbol;
+      } else {
+        Gameboard.updateGameboard(AIPlayer.id, 1, 1);
+        document.getElementById(`1-1`).textContent = AIPlayer.symbol;
       }
     } else if (round === 2) {
       if (board[0][2] === 0 && board[0][1] === 0) {
@@ -321,6 +318,7 @@ const AILogic = (function () {
   };
 
   const randomMove = function () {
+    const board = Gameboard.getGameboard();
     const possibleMoves = [];
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
@@ -335,10 +333,18 @@ const AILogic = (function () {
 })();
 
 const displayController = (function () {
+  const msg = document.getElementById("msg");
+  const gameModeSelect = document.getElementById("game-mode-btns");
+  const singlePlayerBtn = document.getElementById("single-player-btn");
+  const multiplayerBtn = document.getElementById("multiplayer-btn");
+  const playerSelect = document.getElementById("player-select-btns");
+  const player1Btn = document.getElementById("player1-btn");
+  const player2Btn = document.getElementById("player2-btn");
+  const newGameMsg = document.getElementById("new-game-msg");
+  const newGameDisplay = document.getElementById("new-game-display");
+
   const p1 = Players.getP1();
   const p2 = Players.getP2();
-
-  const msg = document.getElementById("msg");
 
   const whichPlayer = () => {
     if (p1.turn) {
@@ -350,17 +356,56 @@ const displayController = (function () {
     }
   };
 
+  //event listener done this way because because i do not want to type the whole thing multiple times
+  //i also need it in AIlogic
   const playerMoveAddEventListener = function () {
-    console.log("addEventListener");
     Array.from(cells).forEach((cell) => {
       cell.addEventListener("click", playerMove);
     });
   };
+  //event listener done this way because because i do not want to type the whole thing multiple times
   const playerMoveRemoveEventListener = function () {
-    console.log("remove event listener");
     Array.from(cells).forEach((cell) => {
       cell.removeEventListener("click", playerMove);
     });
+  };
+
+  const multiplayerSelect = function () {
+    Players.setUserStatus("player", "player");
+    newGameDisplay.style.display = "none";
+    displayController.playerMoveAddEventListener();
+    newGameBtn.addEventListener("click", displayController.clearDisplay);
+  };
+  //event listener done this way because i need it in the global scope
+  const multiplayerSelectEventListener = function () {
+    multiplayerBtn.addEventListener("click", multiplayerSelect);
+  };
+
+  const singlePlayerSelect = function () {
+    gameModeSelect.style.display = "none";
+    playerSelect.style.display = "block";
+    newGameMsg.textContent = "Please select which player you want to be";
+    //P1btn event listener
+    player1Btn.addEventListener("click", player1Select);
+    //P2btn event listener
+    player2Btn.addEventListener("click", player2Select);
+  };
+  //event listener done this way because i need it in the global scope
+  const singlePlayerSelectEventListener = function () {
+    singlePlayerBtn.addEventListener("click", singlePlayerSelect);
+  };
+
+  const player1Select = function () {
+    Players.setUserStatus("player", "AI");
+    newGameDisplay.style.display = "none";
+    displayController.playerMoveAddEventListener();
+    newGameBtn.addEventListener("click", displayController.clearDisplay);
+  };
+  const player2Select = function () {
+    Players.setUserStatus("AI", "player");
+    newGameDisplay.style.display = "none";
+    AILogic.move();
+    newGameBtn.addEventListener("click", displayController.clearDisplay);
   };
 
   const playerMove = function (e) {
@@ -368,7 +413,6 @@ const displayController = (function () {
     const posX = Number(pos[0]);
     const posY = Number(pos[1]);
     const boardSituation = Gameboard.getGameboard();
-
     if (boardSituation[posX][posY] === 0) {
       e.target.textContent = whichPlayer().symbol;
       msg.textContent = "";
@@ -399,18 +443,16 @@ const displayController = (function () {
     game.resetGameOver();
     Players.resetTurn();
 
-    //this is for multiplayer need to adapt to single player and initial select screen
-    //this creates a problem after clicking the clearBoardBtn where user goes from player1 to player2
-    Array.from(cells).forEach((cell) => {
-      cell.addEventListener("click", displayController.playerMove);
-    });
+    newGameDisplay.style.display = "block";
+    newGameMsg.textContent = "Please select a game mode";
+    gameModeSelect.style.display = "block";
+    playerSelect.style.display = "none";
   };
 
   const gameOverDisplay = function () {
     const winner = game.getWinner();
-    console.log(winner);
     if (winner) {
-      msg.textContent = `The winner is player${winner}`;
+      msg.textContent = `The winner is player ${winner}`;
     } else {
       msg.textContent = `The game ends in a draw`;
     }
@@ -422,28 +464,22 @@ const displayController = (function () {
     gameOverDisplay,
     playerMoveAddEventListener,
     playerMoveRemoveEventListener,
+    whichPlayer,
+    multiplayerSelectEventListener,
+    singlePlayerSelectEventListener,
   };
 })();
-//this should not be here but i need to make it so that it activates when user decides
-//between single player and multiplayer
-displayController.playerMoveAddEventListener();
 
-/* Array.from(cells).forEach((cell) => {
-  cell.addEventListener("click", displayController.playerMove);
-}); */
-//this should not be here but i need to make it so that it activates when user decides
-//between single player and multiplayer
-//AILogic.move();
-
-clearBtn.addEventListener("click", displayController.clearDisplay);
+displayController.multiplayerSelectEventListener();
+displayController.singlePlayerSelectEventListener();
 
 /*
 TO DO LIST:
+all HTML and CSS for pvp/pve setting(DONE)
 FIX
-all HTML and CSS for pvp/pve setting
-DRY for the game.gameOver and AILogic.winningMove(DONE)
+last touch ups for css:
+  background clr, board lines, symbols transition, active user highlighting
 try messing about and find bugs
-delete all console.log() calls
 NEW FEATURE:
 difficulty settings;
  */

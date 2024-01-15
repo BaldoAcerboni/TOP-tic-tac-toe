@@ -9,6 +9,7 @@
   </head>
   <body>
     <h1>Tic Tac Toe</h1>
+
     <div class="container">
       <div class="cell" id="0-0"></div>
       <div class="cell" id="0-1"></div>
@@ -20,10 +21,32 @@
       <div class="cell" id="2-1"></div>
       <div class="cell" id="2-2"></div>
     </div>
+
     <p id="msg"></p>
-    <button type="button" id="clear">CLEAR BOARD</button>
-    <!-- think about putting those  btns below inside a div and all the ambaradan -->
-    <button type="button" id="player1">PLAYER 1 (O)</button>
-    <button type="button" id="player2">PLAYER 2 (X)</button>
+    <p id="P1">Player 1: O</p>
+    <p id="P2">Player 2: X</p>
+    <button type="button" id="new-game-btn">NEW GAME</button>
+
+    <div id="new-game-display">
+      <p id="new-game-msg">Please select a game mode</p>
+
+      <div id="game-mode-btns">
+        <button type="button" class="NG-display-btns" id="single-player-btn">
+          SINGLE PLAYER
+        </button>
+        <button type="button" class="NG-display-btns" id="multiplayer-btn">
+          MULTIPLAYER
+        </button>
+      </div>
+
+      <div id="player-select-btns">
+        <button type="button" class="NG-display-btns" id="player1-btn">
+          PLAYER 1 (O)
+        </button>
+        <button type="button" class="NG-display-btns" id="player2-btn">
+          PLAYER 2 (X)
+        </button>
+      </div>
+    </div>
   </body>
 </html>

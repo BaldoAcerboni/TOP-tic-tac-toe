@@ -31,21 +31,65 @@ p {
 }
 
 button {
-  position: absolute;
   padding: 20px;
 }
 
-#clear {
-  top: 40%;
-  right: 5%;
+#new-game-btn {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
 }
 
-#player1 {
+#P1 {
+  position: absolute;
+  left: 5%;
   top: 35%;
-  left: 5%;
+  font-size: 2rem;
+  font-weight: 800;
 }
 
-#player2 {
-  top: 45%;
+#P2 {
+  position: absolute;
   left: 5%;
+  top: 45%;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+#new-game-display {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% - 100px);
+  height: calc(100% - 100px);
+  margin: 50px;
+  background-color: rgb(100, 100, 100);
+  border-radius: 20px;
+}
+
+#new-game-msg {
+  position: absolute;
+  top: 20%;
+  width: 100%;
+  font-size: 2rem;
+  color: rgb(255, 255, 255);
+}
+
+#game-mode-btns {
+  /* display: none; */
+  position: absolute;
+  top: 40%;
+  width: 100%;
+}
+
+#player-select-btns {
+  display: none;
+  position: absolute;
+  top: 40%;
+  width: 100%;
+}
+
+.NG-display-btns {
+  border-radius: 5px;
 }
