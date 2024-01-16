@@ -273,7 +273,7 @@ const AILogic = (function () {
 
     //userWin AIWin and random are probably a bit redundant here since they are not used for the first few moves
     //but otherwise i would need to declare them each time i need them so since performance is not an issue
-    //i  would rather avoid the risk of typos.
+    //i would rather avoid the risk of typos, also this function is long enough already.
     const userWin = winningMove(userPlayer.id);
     const AIWin = winningMove(AIPlayer.id);
     const random = randomMove();
@@ -594,12 +594,10 @@ displayController.singlePlayerSelectEventListener();
 
 /*
 DONE:
-active user highlighting(JS)
-difficulty settings;
-symbols transition(JS)
 TO DO LIST:
+background clr, board lines,
 FIX
 last touch ups for css:
-  background clr, board lines, , 
+  winning cell color change
 try messing about and find bugs
  */
