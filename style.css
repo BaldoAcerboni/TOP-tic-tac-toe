@@ -16,7 +16,6 @@ p {
 }
 
 .container {
-  border: 1px solid black;
   width: 400px;
   height: 400px;
   margin: 50px auto 50px auto;
@@ -25,9 +24,21 @@ p {
   grid-template-rows: repeat(3, 1fr);
 }
 
+.cell:nth-child(3n + 2) {
+  border-left: 1px solid black;
+  border-right: 1px solid black;
+}
+.cell:nth-child(n + 4):nth-child(-n + 6) {
+  border-top: 1px solid black;
+  border-bottom: 1px solid black;
+}
+
 .cell {
-  border: 1px solid black;
-  font-size: 110px;
+  transition: font-size 1s ease-out;
+  font-size: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 button {
@@ -47,6 +58,7 @@ button {
   top: 35%;
   font-size: 2rem;
   font-weight: 800;
+  padding: 5px;
 }
 
 #P2 {
@@ -55,6 +67,21 @@ button {
   top: 45%;
   font-size: 2rem;
   font-weight: 800;
+  padding: 5px;
+}
+
+.active {
+  border: 2px solid rgb(0, 200, 0);
+  border-radius: 5px;
+}
+
+#game-info {
+  position: absolute;
+  right: 5%;
+  top: 35%;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 2;
 }
 
 #new-game-display {
@@ -78,6 +105,13 @@ button {
 
 #game-mode-btns {
   /* display: none; */
+  position: absolute;
+  top: 40%;
+  width: 100%;
+}
+
+#difficulty-select-btns {
+  display: none;
   position: absolute;
   top: 40%;
   width: 100%;

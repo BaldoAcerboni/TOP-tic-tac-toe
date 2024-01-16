@@ -1,6 +1,3 @@
-const newGameBtn = document.getElementById("new-game-btn");
-const cells = document.querySelectorAll(".cell");
-
 const Gameboard = (function () {
   let _gameboard = [
     [0, 0, 0],
@@ -180,6 +177,40 @@ const game = (function () {
 })();
 
 const AILogic = (function () {
+  let _difficulty = "";
+
+  const setDifficulty = function (dif) {
+    _difficulty = dif;
+  };
+  /* const generateRandomNr = function () {
+    return Math.floor(Math.random() * 101);
+  }; */
+  const optimalOrRandom = function () {
+    const value = Math.floor(Math.random() * 101);
+    if (_difficulty === "U") {
+      optimalMove();
+    } else if (_difficulty === "H") {
+      if (value < 65) {
+        optimalMove();
+      } else {
+        playRandomMove();
+      }
+    } else if (_difficulty === "N") {
+      if (value < 40) {
+        optimalMove();
+      } else {
+        playRandomMove();
+      }
+    } else if (_difficulty === "E") {
+      if (value < 10) {
+        //TEMP FOR BUG CHECK
+        optimalMove();
+      } else {
+        playRandomMove();
+      }
+    }
+  };
+
   const winningMove = function (playerId) {
     const board = Gameboard.getGameboard();
     let win = false;
@@ -234,8 +265,7 @@ const AILogic = (function () {
     return false;
   };
 
-  //need to put AI selector inside displayController
-  const move = (/* difficulty(?) */) => {
+  const optimalMove = () => {
     const board = Gameboard.getGameboard();
     const round = game.getRoundNr();
     const AIPlayer = Players.getAI();
@@ -253,63 +283,84 @@ const AILogic = (function () {
     if (round === 0) {
       Gameboard.updateGameboard(AIPlayer.id, 0, 0);
       document.getElementById(`0-0`).textContent = AIPlayer.symbol;
+      document.getElementById(`0-0`).style.fontSize = "5rem";
     } else if (round === 1) {
       if (board[1][1] !== 0) {
         Gameboard.updateGameboard(AIPlayer.id, 0, 0);
         document.getElementById(`0-0`).textContent = AIPlayer.symbol;
+        document.getElementById(`0-0`).style.fontSize = "5rem";
       } else {
         Gameboard.updateGameboard(AIPlayer.id, 1, 1);
         document.getElementById(`1-1`).textContent = AIPlayer.symbol;
+        document.getElementById(`1-1`).style.fontSize = "5rem";
       }
     } else if (round === 2) {
       if (board[0][2] === 0 && board[0][1] === 0) {
         Gameboard.updateGameboard(AIPlayer.id, 0, 2);
         document.getElementById(`0-2`).textContent = AIPlayer.symbol;
+        document.getElementById(`0-2`).style.fontSize = "5rem";
       } else {
         Gameboard.updateGameboard(AIPlayer.id, 2, 0);
         document.getElementById(`2-0`).textContent = AIPlayer.symbol;
+        document.getElementById(`2-0`).style.fontSize = "5rem";
       }
     } else if (round === 3) {
       if (userWin) {
         Gameboard.updateGameboard(AIPlayer.id, userWin[0], userWin[1]);
         document.getElementById(`${userWin[0]}-${userWin[1]}`).textContent =
           AIPlayer.symbol;
+        document.getElementById(`${userWin[0]}-${userWin[1]}`).style.fontSize =
+          "5rem";
       } else if (board[0][1] === 0 && board[2][1] === 0) {
         Gameboard.updateGameboard(AIPlayer.id, 0, 1);
         document.getElementById(`0-1`).textContent = AIPlayer.symbol;
+        document.getElementById(`0-1`).style.fontSize = "5rem";
       } else {
         Gameboard.updateGameboard(AIPlayer.id, 1, 0);
         document.getElementById(`1-0`).textContent = AIPlayer.symbol;
+        document.getElementById(`1-0`).style.fontSize = "5rem";
       }
     } else if (round === 4) {
       if (AIWin) {
         Gameboard.updateGameboard(AIPlayer.id, AIWin[0], AIWin[1]);
         document.getElementById(`${AIWin[0]}-${AIWin[1]}`).textContent =
           AIPlayer.symbol;
+        document.getElementById(`${AIWin[0]}-${AIWin[1]}`).style.fontSize =
+          "5rem";
       } else if (userWin) {
         Gameboard.updateGameboard(AIPlayer.id, userWin[0], userWin[1]);
         document.getElementById(`${userWin[0]}-${userWin[1]}`).textContent =
           AIPlayer.symbol;
+        document.getElementById(`${userWin[0]}-${userWin[1]}`).style.fontSize =
+          "5rem";
       } else if (board[2][2] === 0) {
         Gameboard.updateGameboard(AIPlayer.id, 2, 2);
         document.getElementById(`2-2`).textContent = AIPlayer.symbol;
+        document.getElementById(`2-2`).style.fontSize = "5rem";
       } else {
         Gameboard.updateGameboard(AIPlayer.id, 2, 0);
         document.getElementById(`2-0`).textContent = AIPlayer.symbol;
+        document.getElementById(`2-0`).style.fontSize = "5rem";
       }
     } else if (round > 4) {
       if (AIWin) {
         Gameboard.updateGameboard(AIPlayer.id, AIWin[0], AIWin[1]);
         document.getElementById(`${AIWin[0]}-${AIWin[1]}`).textContent =
           AIPlayer.symbol;
+        document.getElementById(`${AIWin[0]}-${AIWin[1]}`).style.fontSize =
+          "5rem";
       } else if (userWin) {
         Gameboard.updateGameboard(AIPlayer.id, userWin[0], userWin[1]);
         document.getElementById(`${userWin[0]}-${userWin[1]}`).textContent =
           AIPlayer.symbol;
+        document.getElementById(`${userWin[0]}-${userWin[1]}`).style.fontSize =
+          "5rem";
       } else {
         Gameboard.updateGameboard(AIPlayer.id, random[0], random[1]);
         document.getElementById(`${random[0]}-${random[1]}`).textContent =
           AIPlayer.symbol;
+        document.getElementById(`${random[0]}-${random[1]}`).style.fontSize =
+          "5rem";
       }
     }
     if (!game.getGameOverStatus()) {
@@ -329,24 +380,48 @@ const AILogic = (function () {
     }
     return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
   };
-  return { move };
+
+  const playRandomMove = function () {
+    const AIPlayer = Players.getAI();
+    const random = randomMove();
+    Gameboard.updateGameboard(AIPlayer.id, random[0], random[1]);
+    document.getElementById(`${random[0]}-${random[1]}`).textContent =
+      AIPlayer.symbol;
+    document.getElementById(`${random[0]}-${random[1]}`).style.fontSize =
+      "5rem";
+    if (!game.getGameOverStatus()) {
+      displayController.playerMoveAddEventListener();
+    }
+  };
+  return { setDifficulty, optimalOrRandom };
 })();
 
 const displayController = (function () {
+  //main display
+  const cells = document.querySelectorAll(".cell");
+  const newGameBtn = document.getElementById("new-game-btn");
   const msg = document.getElementById("msg");
+  const gameInfo = document.getElementById("game-info");
+  const P1activity = document.getElementById("P1");
+  const P2activity = document.getElementById("P2");
+  //new game display
   const gameModeSelect = document.getElementById("game-mode-btns");
   const singlePlayerBtn = document.getElementById("single-player-btn");
   const multiplayerBtn = document.getElementById("multiplayer-btn");
+  const difficultySelect = document.getElementById("difficulty-select-btns");
+  const easyBtn = document.getElementById("easy-btn");
+  const normalBtn = document.getElementById("normal-btn");
+  const hardBtn = document.getElementById("hard-btn");
+  const unbeatableBtn = document.getElementById("unbeatable-btn");
   const playerSelect = document.getElementById("player-select-btns");
   const player1Btn = document.getElementById("player1-btn");
   const player2Btn = document.getElementById("player2-btn");
   const newGameMsg = document.getElementById("new-game-msg");
   const newGameDisplay = document.getElementById("new-game-display");
 
-  const p1 = Players.getP1();
-  const p2 = Players.getP2();
-
   const whichPlayer = () => {
+    const p1 = Players.getP1();
+    const p2 = Players.getP2();
     if (p1.turn) {
       const player = p1;
       return player;
@@ -373,7 +448,10 @@ const displayController = (function () {
   const multiplayerSelect = function () {
     Players.setUserStatus("player", "player");
     newGameDisplay.style.display = "none";
+    gameInfo.textContent = "Multiplayer";
+    gameInfo.style.top = "38%";
     displayController.playerMoveAddEventListener();
+    P1activity.className = "active";
     newGameBtn.addEventListener("click", displayController.clearDisplay);
   };
   //event listener done this way because i need it in the global scope
@@ -383,57 +461,95 @@ const displayController = (function () {
 
   const singlePlayerSelect = function () {
     gameModeSelect.style.display = "none";
-    playerSelect.style.display = "block";
-    newGameMsg.textContent = "Please select which player you want to be";
-    //P1btn event listener
-    player1Btn.addEventListener("click", player1Select);
-    //P2btn event listener
-    player2Btn.addEventListener("click", player2Select);
+    difficultySelect.style.display = "block";
+    newGameMsg.textContent = "Please select the game difficulty";
+    gameInfo.textContent = `Single player`;
+    gameInfo.style.top = "33%";
+    easyBtn.addEventListener("click", easySelect);
+    normalBtn.addEventListener("click", normalSelect);
+    hardBtn.addEventListener("click", hardSelect);
+    unbeatableBtn.addEventListener("click", unbeatableSelect);
   };
   //event listener done this way because i need it in the global scope
   const singlePlayerSelectEventListener = function () {
     singlePlayerBtn.addEventListener("click", singlePlayerSelect);
   };
 
+  const easySelect = function () {
+    difficultyToPlayerSelect("E");
+    gameInfo.innerHTML += "<br>Easy";
+  };
+  const normalSelect = function () {
+    difficultyToPlayerSelect("N");
+    gameInfo.innerHTML += "<br>Normal";
+  };
+  const hardSelect = function () {
+    difficultyToPlayerSelect("H");
+    gameInfo.innerHTML += "<br>Hard";
+  };
+  const unbeatableSelect = function () {
+    difficultyToPlayerSelect("U");
+    gameInfo.innerHTML += "<br>Unbeatable";
+  };
+
+  const difficultyToPlayerSelect = function (difficulty) {
+    difficultySelect.style.display = "none";
+    playerSelect.style.display = "block";
+    newGameMsg.textContent = "Please select which player you want to be";
+    player1Btn.addEventListener("click", player1Select);
+    player2Btn.addEventListener("click", player2Select);
+    AILogic.setDifficulty(difficulty);
+  };
+
   const player1Select = function () {
     Players.setUserStatus("player", "AI");
     newGameDisplay.style.display = "none";
+    P1activity.className = "active";
     displayController.playerMoveAddEventListener();
     newGameBtn.addEventListener("click", displayController.clearDisplay);
   };
   const player2Select = function () {
     Players.setUserStatus("AI", "player");
     newGameDisplay.style.display = "none";
-    AILogic.move();
+    P2activity.className = "active";
+    AILogic.optimalOrRandom();
     newGameBtn.addEventListener("click", displayController.clearDisplay);
   };
 
   const playerMove = function (e) {
+    const p1 = Players.getP1();
+    const p2 = Players.getP2();
     const pos = e.target.id.split("-");
     const posX = Number(pos[0]);
     const posY = Number(pos[1]);
     const boardSituation = Gameboard.getGameboard();
     if (boardSituation[posX][posY] === 0) {
       e.target.textContent = whichPlayer().symbol;
+      //transition
+      e.target.style.fontSize = "6rem";
       msg.textContent = "";
       Gameboard.updateGameboard(whichPlayer().id, posX, posY);
     } else {
-      msg.textContent = `Position has already been selected by player${boardSituation[posX][posY]}`;
+      msg.textContent = `Position has already been selected by player ${boardSituation[posX][posY]}`;
       return;
     }
     if (p1.userStatus === "AI" || p2.userStatus === "AI") {
       if (whichPlayer().userStatus === "AI") {
         playerMoveRemoveEventListener();
         if (!game.getGameOverStatus()) {
-          AILogic.move();
+          AILogic.optimalOrRandom();
         }
       }
+    } else {
+      document.getElementById(`P1`).classList.toggle("active");
+      document.getElementById(`P2`).classList.toggle("active");
     }
   };
 
   const clearDisplay = function () {
     Array.from(cells).forEach((cell) => {
       cell.textContent = "";
+      cell.style.fontSize = "1rem";
     });
     msg.textContent = "";
 
@@ -443,6 +559,8 @@ const displayController = (function () {
     game.resetGameOver();
     Players.resetTurn();
 
+    P1activity.className = "";
+    P2activity.className = "";
     newGameDisplay.style.display = "block";
     newGameMsg.textContent = "Please select a game mode";
     gameModeSelect.style.display = "block";
@@ -450,6 +568,7 @@ const displayController = (function () {
   };
 
   const gameOverDisplay = function () {
+    displayController.playerMoveRemoveEventListener();
     const winner = game.getWinner();
     if (winner) {
       msg.textContent = `The winner is player ${winner}`;
@@ -474,12 +593,13 @@ displayController.multiplayerSelectEventListener();
 displayController.singlePlayerSelectEventListener();
 
 /*
+DONE:
+active user highlighting(JS)
+difficulty settings;
+symbols transition(JS)
 TO DO LIST:
-all HTML and CSS for pvp/pve setting(DONE)
 FIX
 last touch ups for css:
-  background clr, board lines, symbols transition, active user highlighting
+  background clr, board lines, , 
 try messing about and find bugs
-NEW FEATURE:
-difficulty settings;
  */
