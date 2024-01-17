@@ -11,21 +11,30 @@
     <h1>Tic Tac Toe</h1>
 
     <div class="container">
-      <div class="cell" id="0-0"></div>
-      <div class="cell" id="0-1"></div>
-      <div class="cell" id="0-2"></div>
-      <div class="cell" id="1-0"></div>
-      <div class="cell" id="1-1"></div>
-      <div class="cell" id="1-2"></div>
-      <div class="cell" id="2-0"></div>
-      <div class="cell" id="2-1"></div>
-      <div class="cell" id="2-2"></div>
+      <div>
+        <div class="board">
+          <div class="cell" id="0-0"></div>
+          <div class="cell" id="0-1"></div>
+          <div class="cell" id="0-2"></div>
+          <div class="cell" id="1-0"></div>
+          <div class="cell" id="1-1"></div>
+          <div class="cell" id="1-2"></div>
+          <div class="cell" id="2-0"></div>
+          <div class="cell" id="2-1"></div>
+          <div class="cell" id="2-2"></div>
+        </div>
+        <p id="msg"></p>
+      </div>
+
+      <div class="general-info">
+        <div>
+          <p id="P1">Player 1: O</p>
+          <p id="P2">Player 2: X</p>
+        </div>
+        <p id="game-info"></p>
+      </div>
     </div>
 
-    <p id="msg"></p>
-    <p id="P1">Player 1: O</p>
-    <p id="P2">Player 2: X</p>
-    <p id="game-info"></p>
     <button type="button" id="new-game-btn">NEW GAME</button>
 
     <div id="new-game-display">

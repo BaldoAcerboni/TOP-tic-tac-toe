@@ -84,11 +84,10 @@ const game = (function () {
   };
 
   const crossCheck = function (board) {
-    if (
-      (board[0][0] === board[1][1] && board[1][1] === board[2][2]) ||
-      (board[0][2] === board[1][1] && board[1][1] === board[2][0])
-    ) {
-      return true;
+    if (board[0][0] === board[1][1] && board[1][1] === board[2][2]) {
+      return [true, 0];
+    } else if (board[0][2] === board[1][1] && board[1][1] === board[2][0]) {
+      return [true, 1];
     }
   };
   const rowCheck = function (board) {
@@ -120,8 +119,9 @@ const game = (function () {
     if (board[1][1]) {
       const crossWin = crossCheck(board);
       if (crossWin) {
-        gameOver = crossWin;
+        gameOver = crossWin[0];
         _winner = board[1][1];
+        displayController.winningCellsColorChange("cross", crossWin[1]);
       }
     }
     if (board[0][0] || board[1][0] || board[2][0]) {
@@ -130,6 +130,7 @@ const game = (function () {
         const whichRow = rowWin[1];
         gameOver = rowWin[0];
         _winner = board[whichRow][0];
+        displayController.winningCellsColorChange("row", whichRow);
       }
     }
     if (board[0][0] || board[0][1] || board[0][2]) {
@@ -138,6 +139,7 @@ const game = (function () {
         const whichCol = colWin[1];
         gameOver = colWin[0];
         _winner = board[0][whichCol];
+        displayController.winningCellsColorChange("col", whichCol);
       }
     }
     if (_winner === 0 && _roundCount === 9) {
@@ -182,11 +184,10 @@ const AILogic = (function () {
   const setDifficulty = function (dif) {
     _difficulty = dif;
   };
-  /* const generateRandomNr = function () {
-    return Math.floor(Math.random() * 101);
-  }; */
+
   const optimalOrRandom = function () {
     const value = Math.floor(Math.random() * 101);
+    console.log(value);
     if (_difficulty === "U") {
       optimalMove();
     } else if (_difficulty === "H") {
@@ -337,10 +338,16 @@ const AILogic = (function () {
         Gameboard.updateGameboard(AIPlayer.id, 2, 2);
         document.getElementById(`2-2`).textContent = AIPlayer.symbol;
         document.getElementById(`2-2`).style.fontSize = "5rem";
-      } else {
+      } else if (board[2][0] === 0) {
         Gameboard.updateGameboard(AIPlayer.id, 2, 0);
         document.getElementById(`2-0`).textContent = AIPlayer.symbol;
         document.getElementById(`2-0`).style.fontSize = "5rem";
+      } else {
+        Gameboard.updateGameboard(AIPlayer.id, random[0], random[1]);
+        document.getElementById(`${random[0]}-${random[1]}`).textContent =
+          AIPlayer.symbol;
+        document.getElementById(`${random[0]}-${random[1]}`).style.fontSize =
+          "5rem";
       }
     } else if (round > 4) {
       if (AIWin) {
@@ -525,8 +532,7 @@ const displayController = (function () {
     const boardSituation = Gameboard.getGameboard();
     if (boardSituation[posX][posY] === 0) {
       e.target.textContent = whichPlayer().symbol;
-      //transition
-      e.target.style.fontSize = "6rem";
+      e.target.style.fontSize = "5rem";
       msg.textContent = "";
       Gameboard.updateGameboard(whichPlayer().id, posX, posY);
     } else {
@@ -550,6 +556,7 @@ const displayController = (function () {
     Array.from(cells).forEach((cell) => {
       cell.textContent = "";
       cell.style.fontSize = "1rem";
+      cell.className = "cell";
     });
     msg.textContent = "";
 
@@ -577,6 +584,30 @@ const displayController = (function () {
     }
   };
 
+  const winningCellsColorChange = function (type, num) {
+    if (type === "cross") {
+      if (num) {
+        document.getElementById(`0-2`).classList += " win";
+        document.getElementById(`1-1`).classList += " win";
+        document.getElementById(`2-0`).classList += " win";
+      } else {
+        document.getElementById(`0-0`).classList += " win";
+        document.getElementById(`1-1`).classList += " win";
+        document.getElementById(`2-2`).classList += " win";
+      }
+    } else if (type === "row") {
+      document.getElementById(`${num}-0`).classList += " win";
+      document.getElementById(`${num}-1`).classList += " win";
+      document.getElementById(`${num}-2`).classList += " win";
+    } else if (type === "col") {
+      document.getElementById(`0-${num}`).classList += " win";
+      document.getElementById(`1-${num}`).classList += " win";
+      document.getElementById(`2-${num}`).classList += " win";
+    } else {
+      console.log("something's wrong");
+    }
+  };
+
   return {
     playerMove,
     clearDisplay,
@@ -586,6 +617,7 @@ const displayController = (function () {
     whichPlayer,
     multiplayerSelectEventListener,
     singlePlayerSelectEventListener,
+    winningCellsColorChange,
   };
 })();
 
@@ -594,10 +626,7 @@ displayController.singlePlayerSelectEventListener();
 
 /*
 DONE:
-TO DO LIST:
-background clr, board lines,
-FIX
-last touch ups for css:
-  winning cell color change
-try messing about and find bugs
+change .container layout from absolute positioning to flex-box(p tags)
+winning cells color change + animation
+add random move in AILogic.optimalMove as last condition inside round === 4 condition
  */

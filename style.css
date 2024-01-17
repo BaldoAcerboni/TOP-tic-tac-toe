@@ -1,3 +1,4 @@
+/* general crap */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -8,11 +9,11 @@
 }
 
 body {
-  background: rgb(100, 0, 200);
+  background: rgb(80, 0, 150);
 }
 
 h1 {
-  font-size: 50px;
+  font-size: 3rem;
   color: white;
 }
 
@@ -21,7 +22,24 @@ p {
   color: white;
 }
 
+button {
+  padding: 20px;
+}
+
 .container {
+  width: 100%;
+  display: flex;
+  flex-flow: row-reverse wrap;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.container > div:first-child {
+  width: min-content;
+}
+
+/* all things board related */
+.board {
   width: 400px;
   height: 400px;
   margin: 50px auto 50px auto;
@@ -41,6 +59,26 @@ p {
   position: relative;
 }
 
+.win {
+  background: rgb(0, 200, 0);
+  animation: win-color 9s infinite linear;
+}
+
+@keyframes win-color {
+  0% {
+    background: rgb(0, 255, 0);
+  }
+  33% {
+    background: rgb(255, 0, 0);
+  }
+  66% {
+    background: rgb(0, 0, 255);
+  }
+  100% {
+    background: rgb(0, 255, 0);
+  }
+}
+
 .cell:nth-child(1)::after {
   position: absolute;
   content: "";
@@ -49,6 +87,7 @@ p {
   width: 6px;
   height: 300%;
   background: linear-gradient(90deg, transparent, black 50%, transparent);
+  z-index: 1;
 }
 .cell:nth-child(1)::before {
   position: absolute;
@@ -58,6 +97,7 @@ p {
   width: 300%;
   height: 6px;
   background: linear-gradient(0deg, transparent, black 50%, transparent);
+  z-index: 1;
 }
 .cell:nth-child(9)::after {
   position: absolute;
@@ -67,6 +107,7 @@ p {
   width: 6px;
   height: 300%;
   background: linear-gradient(90deg, transparent, black 50%, transparent);
+  z-index: 1;
 }
 .cell:nth-child(9)::before {
   position: absolute;
@@ -76,51 +117,54 @@ p {
   width: 300%;
   height: 6px;
   background: linear-gradient(0deg, transparent, black 50%, transparent);
+  z-index: 1;
 }
 
-button {
-  padding: 20px;
+/* messages and info */
+.general-info {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#msg {
+  min-height: 60px;
 }
 
 #new-game-btn {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
 }
 
 #P1 {
-  position: absolute;
-  left: 5%;
-  top: 35%;
   font-size: 2rem;
   font-weight: 800;
   padding: 5px;
+  margin: 2rem 0;
 }
 
 #P2 {
-  position: absolute;
-  left: 5%;
-  top: 45%;
   font-size: 2rem;
   font-weight: 800;
   padding: 5px;
 }
 
 .active {
-  border: 2px solid rgb(0, 200, 0);
+  border: 5px solid rgb(0, 200, 0);
   border-radius: 5px;
 }
 
 #game-info {
-  position: absolute;
-  right: 5%;
-  top: 35%;
   font-size: 2rem;
   font-weight: 800;
   line-height: 2;
 }
 
+/* all things new game display related */
 #new-game-display {
   position: absolute;
   top: 0;
@@ -130,18 +174,16 @@ button {
   margin: 50px;
   background-color: rgb(100, 100, 100);
   border-radius: 20px;
+  z-index: 2;
 }
 
 #new-game-msg {
-  position: absolute;
-  top: 20%;
   width: 100%;
   font-size: 2rem;
   color: rgb(255, 255, 255);
 }
 
 #game-mode-btns {
-  /* display: none; */
   position: absolute;
   top: 40%;
   width: 100%;
