@@ -46,6 +46,13 @@ const players = (function () {
   const getP1 = () => playerOne;
   const getP2 = () => playerTwo;
 
+  const getActivePlayer = function () {
+    if (playerOne.turn) {
+      return playerOne;
+    } else {
+      return playerTwo;
+    }
+  };
   function swapActivePlayer() {
     playerOne.turn = !playerOne.turn;
     playerTwo.turn = !playerTwo.turn;
@@ -56,7 +63,7 @@ const players = (function () {
     playerTwo.turn = false;
   }
 
-  return { getP1, getP2, swapActivePlayer, resetActivePlayer };
+  return { getP1, getP2, getActivePlayer, swapActivePlayer, resetActivePlayer };
 })();
 
 const game = (function () {
@@ -105,11 +112,7 @@ const game = (function () {
             board[i][j] === board[i][j + 2] &&
             j === 0
           ) {
-            if (board[i][j] === player1.sign) {
-              console.log("player one wins");
-            } else {
-              console.log("player two wins");
-            }
+            displayWinner(board[i][j], player1.sign);
             setGameOver();
             return;
           } else if (
@@ -117,11 +120,7 @@ const game = (function () {
             board[i][j] === board[i + 1][j] &&
             board[i][j] === board[i + 2][j]
           ) {
-            if (board[i][j] === player1.sign) {
-              console.log("player one wins");
-            } else {
-              console.log("player two wins");
-            }
+            displayWinner(board[i][j], player1.sign);
             setGameOver();
             return;
           } else if (
@@ -130,11 +129,7 @@ const game = (function () {
             board[1][1] === board[i][j] &&
             board[i][j] === board[2][2]
           ) {
-            if (board[i][j] === player1.sign) {
-              console.log("player one wins");
-            } else {
-              console.log("player two wins");
-            }
+            displayWinner(board[i][j], player1.sign);
             setGameOver();
             return;
           } else if (
@@ -143,11 +138,7 @@ const game = (function () {
             board[1][1] === board[i][j] &&
             board[i][j] === board[2][0]
           ) {
-            if (board[i][j] === player1.sign) {
-              console.log("player one wins");
-            } else {
-              console.log("player two wins");
-            }
+            displayWinner(board[i][j], player1.sign);
             setGameOver();
             return;
           }
@@ -161,10 +152,30 @@ const game = (function () {
     return false;
   }
 
+  function displayWinner(position, p1Sign) {
+    if (position === p1Sign) {
+      displayController.resultPara.textContent = "player one wins";
+    } else {
+      displayController.resultPara.textContent = "player two wins";
+    }
+  }
+
   function setGameOver() {
     resetRoundCount();
     players.resetActivePlayer();
     gameboard.clearBoard();
+    Array.from(displayController.cell).forEach((c) => {
+      c.removeEventListener("click", displayController.playCell);
+    });
+  }
+
+  function newGame() {
+    setGameOver();
+    displayController.resultPara.textContent = "";
+    Array.from(displayController.cell).forEach((c) => {
+      c.textContent = "";
+      c.addEventListener("click", displayController.playCell);
+    });
   }
 
   return {
@@ -174,5 +185,36 @@ const game = (function () {
     checkWinner,
     playRound,
     setGameOver,
+    newGame,
+  };
+})();
+
+const displayController = (function () {
+  const cell = document.querySelectorAll(".cell");
+  const resultPara = document.querySelector(".result");
+  const newGameBtn = document.querySelector(".new-game-btn");
+
+  function playCell(e) {
+    const row = e.target.id[0];
+    const col = e.target.id[2];
+    const active = players.getActivePlayer();
+
+    game.playRound(row, col);
+    e.target.textContent = active.sign;
+    console.log(row);
+    console.log(col);
+  }
+
+  Array.from(cell).forEach((c) => {
+    c.addEventListener("click", playCell);
+  });
+
+  newGameBtn.addEventListener("click", game.newGame);
+
+  return {
+    cell,
+    resultPara,
+    newGameBtn,
+    playCell,
   };
 })();
