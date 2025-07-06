@@ -33,14 +33,14 @@ const players = (function () {
     id: 1,
     sign: "O",
     turn: true,
-    userStatus: "player",
+    userStatus: "user",
   };
 
   const playerTwo = {
     id: 2,
     sign: "X",
     turn: false,
-    userStatus: "player",
+    userStatus: "user",
   };
 
   const getP1 = () => playerOne;
@@ -63,7 +63,19 @@ const players = (function () {
     playerTwo.turn = false;
   }
 
-  return { getP1, getP2, getActivePlayer, swapActivePlayer, resetActivePlayer };
+  function setUserStatus(p1, p2) {
+    playerOne.userStatus = p1;
+    playerTwo.userStatus = p2;
+  }
+
+  return {
+    getP1,
+    getP2,
+    getActivePlayer,
+    swapActivePlayer,
+    resetActivePlayer,
+    setUserStatus,
+  };
 })();
 
 const game = (function () {
@@ -112,6 +124,11 @@ const game = (function () {
             board[i][j] === board[i][j + 2] &&
             j === 0
           ) {
+            document.getElementById(`${i}-${j}`).style.background = "#22ff00";
+            document.getElementById(`${i}-${j + 1}`).style.background =
+              "#22ff00";
+            document.getElementById(`${i}-${j + 2}`).style.background =
+              "#22ff00";
             displayWinner(board[i][j], player1.sign);
             setGameOver();
             return;
@@ -120,6 +137,11 @@ const game = (function () {
             board[i][j] === board[i + 1][j] &&
             board[i][j] === board[i + 2][j]
           ) {
+            document.getElementById(`${i}-${j}`).style.background = "#22ff00";
+            document.getElementById(`${i + 1}-${j}`).style.background =
+              "#22ff00";
+            document.getElementById(`${i + 2}-${j}`).style.background =
+              "#22ff00";
             displayWinner(board[i][j], player1.sign);
             setGameOver();
             return;
@@ -129,6 +151,9 @@ const game = (function () {
             board[1][1] === board[i][j] &&
             board[i][j] === board[2][2]
           ) {
+            document.getElementById(`${i}-${j}`).style.background = "#22ff00";
+            document.getElementById(`1-1}`).style.background = "#22ff00";
+            document.getElementById(`2-2`).style.background = "#22ff00";
             displayWinner(board[i][j], player1.sign);
             setGameOver();
             return;
@@ -138,6 +163,9 @@ const game = (function () {
             board[1][1] === board[i][j] &&
             board[i][j] === board[2][0]
           ) {
+            document.getElementById(`${i}-${j}`).style.background = "#22ff00";
+            document.getElementById(`1-1`).style.background = "#22ff00";
+            document.getElementById(`2-0`).style.background = "#22ff00";
             displayWinner(board[i][j], player1.sign);
             setGameOver();
             return;
@@ -147,9 +175,8 @@ const game = (function () {
     }
     if (round === 9) {
       setGameOver();
-      return console.log("draw");
+      displayController.resultPara.textContent = "draw";
     }
-    return false;
   }
 
   function displayWinner(position, p1Sign) {
@@ -174,6 +201,7 @@ const game = (function () {
     displayController.resultPara.textContent = "";
     Array.from(displayController.cell).forEach((c) => {
       c.textContent = "";
+      c.style.background = "";
       c.addEventListener("click", displayController.playCell);
     });
   }
@@ -201,8 +229,6 @@ const displayController = (function () {
 
     game.playRound(row, col);
     e.target.textContent = active.sign;
-    console.log(row);
-    console.log(col);
   }
 
   Array.from(cell).forEach((c) => {
@@ -218,3 +244,6 @@ const displayController = (function () {
     playCell,
   };
 })();
+//TO DO:
+
+//Make computer player and make it work with the DOM

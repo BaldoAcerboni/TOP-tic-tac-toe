@@ -83,6 +83,12 @@ main {
   border-left: 2px solid black;
 }
 
+.result {
+  font-size: 1.5rem;
+  background: #22ff00;
+  margin: 30px;
+}
+
 .new-game {
   position: fixed;
   bottom: 0px;
